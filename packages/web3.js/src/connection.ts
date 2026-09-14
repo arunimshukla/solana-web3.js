@@ -1094,10 +1094,7 @@ type RpcParsedTransaction = TransactionForFullJsonParsed<0 | 1>['transaction'];
  * Metadata for a confirmed transaction on the ledger
  */
 export type ConfirmedTransactionMeta = Overwrite<
-  Omit<
-    NonNullable<TransactionForFullJson<0 | 1>['meta']>,
-    'returnData' | 'rewards' | 'status'
-  >,
+  Omit<NonNullable<TransactionForFullJson<0 | 1>['meta']>, 'status'>,
   {
     /** The fee charged for processing the transaction */
     fee: bigint;
@@ -1119,6 +1116,10 @@ export type ConfirmedTransactionMeta = Overwrite<
     loadedAddresses?: LoadedAddresses;
     /** The compute units consumed after processing the transaction */
     computeUnitsConsumed?: bigint;
+    /** The return data from the transaction */
+    returnData?: TransactionReturnData | null;
+    /** Rewards credited or debited by the transaction */
+    rewards?: Array<RpcBlockRewardLike> | null;
   }
 > & {
   /** The cost units consumed after processing the transaction */
@@ -1129,10 +1130,7 @@ export type ConfirmedTransactionMeta = Overwrite<
  * Metadata for a parsed transaction on the ledger
  */
 export type ParsedTransactionMeta = Overwrite<
-  Omit<
-    NonNullable<TransactionForFullJsonParsed<0 | 1>['meta']>,
-    'returnData' | 'rewards' | 'status'
-  >,
+  Omit<NonNullable<TransactionForFullJsonParsed<0 | 1>['meta']>, 'status'>,
   {
     /** The fee charged for processing the transaction */
     fee: bigint;
@@ -1154,6 +1152,10 @@ export type ParsedTransactionMeta = Overwrite<
     loadedAddresses?: LoadedAddresses;
     /** The compute units consumed after processing the transaction */
     computeUnitsConsumed?: bigint;
+    /** The return data from the transaction */
+    returnData?: TransactionReturnData | null;
+    /** Rewards credited or debited by the transaction */
+    rewards?: Array<RpcBlockRewardLike> | null;
   }
 > & {
   /** The cost units consumed after processing the transaction */
@@ -2446,6 +2448,16 @@ export type GetTokenAccountsByOwnerConfig = {
 };
 
 /**
+ * Configuration object for `getParsedTokenAccountsByOwner`
+ */
+export type GetParsedTokenAccountsByOwnerConfig = {
+  /** Optional commitment level */
+  commitment?: Commitment;
+  /** The minimum slot that the request can be evaluated at */
+  minContextSlot?: number | bigint;
+};
+
+/**
  * Configuration object for `getTokenAccountsByDelegate`
  */
 export type GetTokenAccountsByDelegateConfig = {
@@ -3073,7 +3085,7 @@ export class Connection {
   async getParsedTokenAccountsByOwner(
     ownerAddress: PublicKey,
     filter: TokenAccountsFilter,
-    commitment?: Commitment,
+    commitmentOrConfig?: Commitment | GetParsedTokenAccountsByOwnerConfig,
   ): Promise<
     RpcResponseAndContext<
       Array<{
@@ -3082,17 +3094,24 @@ export class Connection {
       }>
     >
   > {
+    const {commitment, config} =
+      extractCommitmentFromConfig(commitmentOrConfig);
     const typedFilter =
       'mint' in filter
         ? {mint: filter.mint.toBase58()}
         : {programId: filter.programId.toBase58()};
     const rpcCommitment = this._resolveCommitment(commitment);
+    const minContextSlot = coerceOptionalNumericToBigInt(
+      config?.minContextSlot,
+      'minContextSlot',
+    );
 
     try {
       const response = await this._typedRpc
         .getTokenAccountsByOwner(ownerAddress.toBase58(), typedFilter, {
           commitment: rpcCommitment,
           encoding: 'jsonParsed',
+          minContextSlot,
         })
         .send();
 
