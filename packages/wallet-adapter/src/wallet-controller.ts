@@ -27,6 +27,7 @@ import {
   signTransactionsWithKit,
 } from './transactions.js';
 import {
+  WalletConfigError,
   WalletError,
   WalletConnectionError,
   WalletDisconnectionError,
@@ -50,6 +51,47 @@ import {
   type WalletContextState,
   type WalletOperations,
 } from './types.js';
+
+/**
+ * Hostnames of the public RPC endpoints Solana operates for each cluster. Only these hosts state
+ * their cluster reliably enough to reject a transaction over; every other hostname (self-hosted
+ * nodes, third-party providers, proxies, tunnels, local validators) can serve any cluster
+ * regardless of what its name suggests, so no cluster is inferred from it.
+ *
+ * @see https://solana.com/docs/references/clusters
+ */
+const OFFICIAL_ENDPOINT_CHAINS: Record<string, WalletPluginConfig['chain']> = {
+  'api.devnet.solana.com': 'solana:devnet',
+  'api.mainnet-beta.solana.com': 'solana:mainnet',
+  'api.mainnet.solana.com': 'solana:mainnet',
+  'api.testnet.solana.com': 'solana:testnet',
+};
+
+/** The cluster an RPC endpoint URL identifies, or `undefined` when the host does not state one. */
+function chainForEndpoint(
+  endpoint: string,
+): WalletPluginConfig['chain'] | undefined {
+  try {
+    return OFFICIAL_ENDPOINT_CHAINS[new URL(endpoint).hostname];
+  } catch {
+    return undefined;
+  }
+}
+
+/** Refuse to submit through an endpoint that plainly names a different cluster than the wallet chain. */
+function assertEndpointMatchesChain(
+  connection: Connection,
+  chain: WalletPluginConfig['chain'],
+) {
+  const endpoint = connection?.rpcEndpoint;
+  if (typeof endpoint !== 'string') return;
+  const inferred = chainForEndpoint(endpoint);
+  if (inferred !== undefined && inferred !== chain) {
+    throw new WalletConfigError(
+      `The connection endpoint ${endpoint} targets ${inferred} but the wallet is configured for ${chain}.`,
+    );
+  }
+}
 
 export interface WalletController
   extends Pick<
@@ -343,6 +385,7 @@ export function createWalletController({
     try {
       if (!connected)
         throw new WalletNotConnectedError('Wallet not connected.');
+      assertEndpointMatchesChain(connection, config.chain);
       const signer = connected.signer;
       if (!signer)
         throw new WalletNotReadyError(

@@ -397,3 +397,34 @@ it.each([
     ).rejects.toMatchObject({name: causeName});
   },
 );
+
+it.each([
+  ['https://api.mainnet-beta.solana.com', 'solana:devnet', true],
+  ['https://api.mainnet.solana.com', 'solana:devnet', true],
+  ['https://api.testnet.solana.com', 'solana:devnet', true],
+  ['https://api.devnet.solana.com', 'solana:mainnet', true],
+  ['https://api.devnet.solana.com', 'solana:devnet', false],
+  // Hosts Solana does not operate can serve any cluster, whatever their name suggests.
+  ['https://mainnet.helius-rpc.com/?api-key=x', 'solana:devnet', false],
+  ['https://rpc.my-devnet-proxy.example', 'solana:mainnet', false],
+  ['http://127.0.0.1:8899', 'solana:mainnet', false],
+  ['https://rpc.example.com', 'solana:devnet', false],
+] as const)(
+  'submitting through %s while configured for %s refuses the transaction (%s)',
+  async (rpcEndpoint, chain, rejects) => {
+    const {owner, transaction} = await signingWallet({chain});
+    const sendRawTransaction = vi.fn(async () => 'sig');
+    const connection = {
+      rpcEndpoint,
+      sendRawTransaction,
+    } as unknown as Connection;
+    const promise = owner.sendTransaction(transaction, connection);
+    if (rejects) {
+      await expect(promise).rejects.toMatchObject({name: 'WalletConfigError'});
+      expect(sendRawTransaction).not.toHaveBeenCalled();
+    } else {
+      await promise;
+      expect(sendRawTransaction).toHaveBeenCalledOnce();
+    }
+  },
+);
