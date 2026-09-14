@@ -2,10 +2,12 @@ import type {TransactionPartialSigner} from '@solana/kit';
 import {stringifyJsonWithBigInts} from '@solana/rpc-spec-types';
 
 import {Connection, SignatureResult} from '../connection';
+import {SystemInstruction} from '../programs/system';
 import {Transaction} from '../transaction';
 import type {ConfirmOptions} from '../connection';
 import type {TransactionSignature} from '../transaction';
 import {SendTransactionError} from '../errors';
+import assert from './assert';
 
 /**
  * Sign, send and confirm a transaction.
@@ -35,6 +37,19 @@ export async function sendAndConfirmTransaction(
     minContextSlot: options.minContextSlot,
   };
 
+  let nonceAccountPubkey;
+  if (transaction.nonceInfo != null) {
+    try {
+      nonceAccountPubkey = SystemInstruction.decodeNonceAdvance(
+        transaction.nonceInfo.nonceInstruction,
+      ).noncePubkey;
+    } catch {
+      throw new Error(
+        'Transaction nonceInfo must contain a valid advance nonce instruction',
+      );
+    }
+  }
+
   const signature = await connection.sendTransaction(
     transaction,
     signers,
@@ -57,12 +72,8 @@ export async function sendAndConfirmTransaction(
         options && options.commitment,
       )
     ).value;
-  } else if (
-    transaction.minNonceContextSlot != null &&
-    transaction.nonceInfo != null
-  ) {
-    const {nonceInstruction} = transaction.nonceInfo;
-    const nonceAccountPubkey = nonceInstruction.keys[0].pubkey;
+  } else if (transaction.nonceInfo != null) {
+    assert(nonceAccountPubkey != null);
     status = (
       await connection.confirmTransaction(
         {
@@ -80,7 +91,7 @@ export async function sendAndConfirmTransaction(
       console.warn(
         'sendAndConfirmTransaction(): A transaction with a deprecated confirmation strategy was ' +
           'supplied along with an `abortSignal`. Only transactions having `lastValidBlockHeight` ' +
-          'or a combination of `nonceInfo` and `minNonceContextSlot` are abortable.',
+          'or `nonceInfo` are abortable.',
       );
     }
     status = (
