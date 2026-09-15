@@ -6,9 +6,10 @@ import {
   WalletModalProvider,
   WalletProvider,
 } from '@solana/wallet-adapter';
+import type {Cluster} from '@solana/web3.js';
 import {clusterApiUrl} from '@solana/web3.js';
 import type {ReactNode} from 'react';
-import {useCallback} from 'react';
+import {useCallback, useMemo} from 'react';
 import {NotificationProvider, useNotify} from '../components/Notifications';
 import {SettingsProvider, useSettings} from '../components/Settings';
 
@@ -18,9 +19,28 @@ const CHAINS = {
   'mainnet-beta': 'solana:mainnet',
 } as const;
 
-function WalletContextProvider({children}: {children: ReactNode}) {
+function rpcEndpoint(network: Cluster): string {
+  if (process.env.NEXT_PUBLIC_RPC_URL) return process.env.NEXT_PUBLIC_RPC_URL;
+  return network === 'mainnet-beta'
+    ? process.env.NEXT_PUBLIC_MAINNET_RPC_URL || clusterApiUrl(network)
+    : clusterApiUrl(network);
+}
+
+function WalletContextProvider({
+  children,
+  endpoint,
+  wsEndpoint,
+}: {
+  children: ReactNode;
+  endpoint?: string;
+  wsEndpoint?: string;
+}) {
   const {autoConnect, network} = useSettings();
   const notify = useNotify();
+  const config = useMemo(
+    () => ({commitment: 'confirmed' as const, wsEndpoint}),
+    [wsEndpoint],
+  );
   const onError = useCallback(
     (error: WalletError) => {
       notify(
@@ -32,7 +52,10 @@ function WalletContextProvider({children}: {children: ReactNode}) {
     [notify],
   );
   return (
-    <ConnectionProvider endpoint={clusterApiUrl(network)}>
+    <ConnectionProvider
+      endpoint={endpoint ?? rpcEndpoint(network)}
+      config={config}
+    >
       <WalletProvider
         chain={CHAINS[network]}
         autoConnect={autoConnect}
@@ -44,11 +67,21 @@ function WalletContextProvider({children}: {children: ReactNode}) {
   );
 }
 
-export function Providers({children}: {children: ReactNode}) {
+export function Providers({
+  children,
+  endpoint,
+  wsEndpoint,
+}: {
+  children: ReactNode;
+  endpoint?: string;
+  wsEndpoint?: string;
+}) {
   return (
     <SettingsProvider>
       <NotificationProvider>
-        <WalletContextProvider>{children}</WalletContextProvider>
+        <WalletContextProvider endpoint={endpoint} wsEndpoint={wsEndpoint}>
+          {children}
+        </WalletContextProvider>
       </NotificationProvider>
     </SettingsProvider>
   );

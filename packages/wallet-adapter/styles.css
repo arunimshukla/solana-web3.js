@@ -5,6 +5,7 @@
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   font-family: inherit;
   font-size: 16px;
   font-weight: 600;
@@ -195,6 +196,9 @@
   font-weight: 400;
   border-radius: 0;
   font-size: 18px;
+  justify-content: flex-start;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .wallet-adapter-modal-list .wallet-adapter-button-end-icon,
