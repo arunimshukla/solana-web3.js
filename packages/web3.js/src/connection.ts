@@ -3962,9 +3962,12 @@ export class Connection {
           | null
           | undefined;
         while (true) {
-          const status = await this.getSignatureStatus(signature, {
-            searchTransactionHistory: true,
-          });
+          const status = await Promise.race([
+            this.getSignatureStatus(signature, {
+              searchTransactionHistory: true,
+            }),
+            cancellationPromise,
+          ]);
           if (status == null) {
             break;
           }
@@ -3972,7 +3975,7 @@ export class Connection {
             status.context.slot <
             (outcome.slotInWhichNonceDidAdvance ?? nonceMinContextSlot ?? 0n)
           ) {
-            await sleep(400);
+            await Promise.race([sleep(400), cancellationPromise]);
             continue;
           }
           signatureStatus = status;
