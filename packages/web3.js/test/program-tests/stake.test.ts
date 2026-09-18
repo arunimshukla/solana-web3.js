@@ -425,7 +425,7 @@ describe('StakeProgram', function () {
       stakePubkey,
       authorizedPubkey,
       splitStakePubkey,
-      lamports: 123,
+      lamports: 123n,
     };
     const transaction = StakeProgram.split(params, 123 /* rentExemptReserve */);
     expect(transaction.instructions).to.have.length(2);
@@ -447,7 +447,7 @@ describe('StakeProgram', function () {
     it(`splitWithSeed (rent reserve: ${rentExemptReserve})`, async () => {
       const stakePubkey = (await Keypair.generate()).publicKey;
       const authorizedPubkey = (await Keypair.generate()).publicKey;
-      const lamports = 123;
+      const lamports = 123n;
       const seed = 'test string';
       const basePubkey = (await Keypair.generate()).publicKey;
       const splitStakePubkey = await PublicKey.createWithSeed(
@@ -536,7 +536,7 @@ describe('StakeProgram', function () {
       stakePubkey,
       authorizedPubkey,
       toPubkey,
-      lamports: 123,
+      lamports: 123n,
     };
     const transaction = StakeProgram.withdraw(params);
     expect(transaction.instructions).to.have.length(1);
@@ -553,13 +553,44 @@ describe('StakeProgram', function () {
       stakePubkey,
       authorizedPubkey,
       toPubkey,
-      lamports: 123,
+      lamports: 123n,
       custodianPubkey,
     };
     const transaction = StakeProgram.withdraw(params);
     expect(transaction.instructions).to.have.length(1);
     const [stakeInstruction] = transaction.instructions;
     expect(params).to.eql(StakeInstruction.decodeWithdraw(stakeInstruction));
+  });
+
+  it('split and withdraw preserve lamports above Number.MAX_SAFE_INTEGER', async () => {
+    const stakePubkey = (await Keypair.generate()).publicKey;
+    const authorizedPubkey = (await Keypair.generate()).publicKey;
+    const splitStakePubkey = (await Keypair.generate()).publicKey;
+    const toPubkey = (await Keypair.generate()).publicKey;
+    const lamports = BigInt(Number.MAX_SAFE_INTEGER) + 2n;
+
+    const splitParams = {
+      stakePubkey,
+      authorizedPubkey,
+      splitStakePubkey,
+      lamports,
+    };
+    const splitInstruction = StakeProgram.split(splitParams, 1).instructions[1];
+    const decodedSplit = StakeInstruction.decodeSplit(splitInstruction);
+    expect(decodedSplit).to.eql(splitParams);
+    expect(
+      StakeProgram.split(decodedSplit, 1).instructions[1].data,
+    ).to.deep.equal(splitInstruction.data);
+
+    const withdrawParams = {stakePubkey, authorizedPubkey, toPubkey, lamports};
+    const [withdrawInstruction] =
+      StakeProgram.withdraw(withdrawParams).instructions;
+    const decodedWithdraw =
+      StakeInstruction.decodeWithdraw(withdrawInstruction);
+    expect(decodedWithdraw).to.eql(withdrawParams);
+    expect(
+      StakeProgram.withdraw(decodedWithdraw).instructions[0].data,
+    ).to.deep.equal(withdrawInstruction.data);
   });
 
   it('deactivate', async () => {
