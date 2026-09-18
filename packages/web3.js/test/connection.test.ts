@@ -814,6 +814,27 @@ describe('Connection', function () {
     expect(res).to.eql(expectedValue);
   });
 
+  it('parsed account queries reject dataSlice', async () => {
+    const account = await Keypair.generate();
+
+    await expect(
+      connection.getParsedAccountInfo(account.publicKey, {
+        commitment: 'confirmed',
+        // @ts-expect-error dataSlice is not part of the parsed-account config type
+        dataSlice: {offset: 4, length: 2},
+      }),
+    ).to.be.rejectedWith(/dataSlice is not supported by getParsedAccountInfo/);
+    await expect(
+      connection.getMultipleParsedAccounts([account.publicKey], {
+        commitment: 'confirmed',
+        // @ts-expect-error dataSlice is not part of the parsed-account config type
+        dataSlice: {offset: 4, length: 2},
+      }),
+    ).to.be.rejectedWith(
+      /dataSlice is not supported by getMultipleParsedAccounts/,
+    );
+  });
+
   it('get program accounts', async () => {
     const account0 = await Keypair.generate();
     const account1 = await Keypair.generate();

@@ -624,6 +624,14 @@ function extractCommitmentFromConfig<TConfig>(
   return {commitment, config};
 }
 
+function assertNoDataSlice(config: unknown, rawMethod: string): void {
+  if (config && typeof config === 'object' && 'dataSlice' in config) {
+    throw new Error(
+      `dataSlice is not supported by ${rawMethod}. Use the unparsed variant to fetch a slice of raw account data.`,
+    );
+  }
+}
+
 /**
  * @internal
  */
@@ -672,6 +680,19 @@ export type GetAccountInfoConfig = {
   minContextSlot?: number | bigint;
   /** Optional data slice to limit the returned account data */
   dataSlice?: DataSlice;
+};
+
+/**
+ * Configuration object for `getParsedAccountInfo`
+ *
+ * `dataSlice` is not supported: the RPC only applies a slice to accounts
+ * it cannot parse, so it has no reliable meaning for parsed queries.
+ */
+export type GetParsedAccountInfoConfig = {
+  /** The level of commitment desired */
+  commitment?: Commitment;
+  /** The minimum slot that the request can be evaluated at */
+  minContextSlot?: number | bigint;
 };
 
 /**
@@ -2451,6 +2472,19 @@ export type GetMultipleAccountsConfig = {
 };
 
 /**
+ * Configuration object for `getMultipleParsedAccounts`
+ *
+ * `dataSlice` is not supported: the RPC only applies a slice to accounts
+ * it cannot parse, so it has no reliable meaning for parsed queries.
+ */
+export type GetMultipleParsedAccountsConfig = {
+  /** Optional commitment level */
+  commitment?: Commitment;
+  /** The minimum slot that the request can be evaluated at */
+  minContextSlot?: number | bigint;
+};
+
+/**
  * Configuration object for `getTokenAccountsByOwner`
  */
 export type GetTokenAccountsByOwnerConfig = {
@@ -3251,19 +3285,19 @@ export class Connection {
    */
   async getParsedAccountInfo(
     publicKey: PublicKey,
-    commitmentOrConfig?: Commitment | GetAccountInfoConfig,
+    commitmentOrConfig?: Commitment | GetParsedAccountInfoConfig,
   ): Promise<
     RpcResponseAndContext<AccountInfoWithSpace<
       Uint8Array | ParsedAccountData
     > | null>
   > {
+    const {commitment, config} =
+      extractCommitmentFromConfig(commitmentOrConfig);
+    assertNoDataSlice(config, 'getParsedAccountInfo');
     try {
-      const {commitment, config} =
-        extractCommitmentFromConfig(commitmentOrConfig);
       const typedPublicKey = publicKey.toBase58();
       const rpcCommitment = this._resolveCommitment(commitment);
       const minContextSlot = config?.minContextSlot;
-
       const response = await this._typedRpc
         .getAccountInfo(typedPublicKey, {
           commitment: rpcCommitment,
@@ -3336,18 +3370,18 @@ export class Connection {
    */
   async getMultipleParsedAccounts(
     publicKeys: PublicKey[],
-    rawConfig?: GetMultipleAccountsConfig,
+    rawConfig?: GetMultipleParsedAccountsConfig,
   ): Promise<
     RpcResponseAndContext<
       (AccountInfoWithSpace<Uint8Array | ParsedAccountData> | null)[]
     >
   > {
+    const {commitment, config} = extractCommitmentFromConfig(rawConfig);
+    assertNoDataSlice(config, 'getMultipleParsedAccounts');
     try {
-      const {commitment, config} = extractCommitmentFromConfig(rawConfig);
       const typedPublicKeys = publicKeys.map(key => key.toBase58());
       const rpcCommitment = this._resolveCommitment(commitment);
       const minContextSlot = config?.minContextSlot;
-
       const response = await this._typedRpc
         .getMultipleAccounts(typedPublicKeys, {
           commitment: rpcCommitment,

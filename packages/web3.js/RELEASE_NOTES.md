@@ -47,6 +47,7 @@ These notes summarize the user-facing changes that landed since 1.98.4.
 - `ConnectionConfig.fetch` and `fetchMiddleware` remain available as compatibility hooks on top of the typed HTTP path.
 - Additional RPC coverage and stricter typing landed across account, block, transaction, token, simulation, and node metadata methods.
 - `Connection.simulateTransaction(...)` now surfaces the RPC's `fee`, `preBalances`, `postBalances`, `preTokenBalances`, `postTokenBalances`, and `loadedAddresses` on the simulation result when the RPC returns them, matching Kit's simulation response.
+- `Connection.getParsedAccountInfo(...)` and `Connection.getMultipleParsedAccounts(...)` now take `GetParsedAccountInfoConfig` and `GetMultipleParsedAccountsConfig`, which omit `dataSlice`.
 - Repeated `getBlockHeight` calls with equivalent arguments are now coalesced.
 - Many RPC arrays and nested collections are now readonly, so code that mutates in place may need to spread or clone first.
 
