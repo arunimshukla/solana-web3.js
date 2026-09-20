@@ -1,46 +1,10 @@
 'use client';
 
-import type {Address, OffchainMessageBytes, SignatureBytes} from '@solana/kit';
-import {
-  assertOffchainMessageV1Equal,
-  getBase58Decoder,
-  getOffchainMessageV1Decoder,
-  verifyOffchainMessageEnvelope,
-} from '@solana/kit';
-import type {
-  SolanaSignInInput,
-  SolanaSignInOutput,
-} from '@solana/wallet-adapter';
-import {useWallet} from '@solana/wallet-adapter';
-import {
-  createSignInMessageText,
-  verifySignIn,
-} from '@solana/wallet-standard-util';
+import {getBase58Decoder} from '@solana/kit';
+import type {SolanaSignInInput} from '@solana/wallet-adapter';
+import {useWallet, verifySignIn} from '@solana/wallet-adapter';
 import {ActionButton} from './ActionButton';
 import {useNotify} from './Notifications';
-
-async function verifyOffchainSignIn(
-  input: SolanaSignInInput,
-  output: SolanaSignInOutput,
-): Promise<void> {
-  if (output.signedMessageFormat?.kind !== 'offchainMessage')
-    throw new Error('Wallet did not sign an offchain message!');
-  const address = (input.address ?? output.account.address) as Address;
-  const content = output.signedMessage as unknown as OffchainMessageBytes;
-  assertOffchainMessageV1Equal(getOffchainMessageV1Decoder().decode(content), {
-    content: createSignInMessageText({
-      ...input,
-      address,
-      domain: input.domain ?? window.location.host,
-    }),
-    requiredSignatories: [{address}],
-    version: 1,
-  });
-  await verifyOffchainMessageEnvelope({
-    content,
-    signatures: {[address]: output.signature as SignatureBytes},
-  });
-}
 
 export function SignIn({offchain = false}: {offchain?: boolean}) {
   const {address, connected, signIn} = useWallet();
@@ -60,8 +24,7 @@ export function SignIn({offchain = false}: {offchain?: boolean}) {
       };
       const output = await signIn(input);
 
-      if (offchain) await verifyOffchainSignIn(input, output);
-      else if (!verifySignIn(input, output))
+      if (!(await verifySignIn(input, output)))
         throw new Error('Sign In verification failed!');
       notify(
         'success',
