@@ -9,6 +9,7 @@ These notes summarize the user-facing changes in `@solana/wallet-adapter` (this 
 - Wallets are discovered through Wallet Standard registration in the browser. There are no per-wallet adapter constructors and no aggregate wallets package.
 - The familiar providers, hooks, components, CSS classes and `WalletError` subclasses are kept, so most applications migrate by changing imports and `WalletProvider` props.
 - `signOffchainMessage` is new, for wallets that advertise `solana:signOffchainMessage` ([ref](https://docs.anza.xyz/proposals/off-chain-message-signing)).
+- `signIn` accepts `useOffchainMessage: { messageVersion: 1 }` to sign in over an off-chain message with wallets that advertise `solana:signIn` version `1.1.0` ([ref](https://github.com/anza-xyz/wallet-standard/pull/93)).
 - `useAnchorWallet()` is kept but deprecated until an Anchor release targets web3.js v3.
 
 ## Breaking Changes

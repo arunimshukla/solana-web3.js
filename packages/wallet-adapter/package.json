@@ -95,7 +95,7 @@
   },
   "dependencies": {
     "@solana/kit-plugin-wallet": "^0.20.0",
-    "@solana/wallet-standard-features": "^1.4.0",
+    "@solana/wallet-standard-features": "^1.5.0",
     "@wallet-standard/ui": "^1.0.3",
     "@wallet-standard/ui-registry": "^1.1.1"
   }

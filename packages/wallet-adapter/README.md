@@ -103,6 +103,8 @@ The controller exposes the same snapshot and operations the hooks do.
 
 `signOffchainMessage(message, { requiredSigners? })` signs a version 1 [off-chain message](https://github.com/anza-xyz/wallet-standard/blob/master/packages/solana/features/src/signOffchainMessage.ts) when the wallet advertises `solana:signOffchainMessage`; `requiredSigners` defaults to the connected account's public key.
 
+`signIn(input?)` hands the Wallet Standard `SolanaSignInInput` to the selected wallet and returns its output for you to verify. Pass `useOffchainMessage: { messageVersion: 1 }` to have the wallet wrap the Sign In With Solana text in a version 1 off-chain message, which is what hardware wallets can display and sign; `output.signedMessageFormat` then reports `{ kind: 'offchainMessage', messageVersion: 1 }`. Only wallets advertising `solana:signIn` version `1.1.0` or later accept this option, and the call rejects with `WalletSignInError` before reaching a wallet that doesn't.
+
 `useWallet().signer` is the active account's Kit signer for applications that also build Kit transactions.
 
 `useWallet().supportedTransactionVersions` is the set of transaction versions the connected account accepts on every signing path it exposes, or `null` while disconnected. Wallets that predate versioned transactions report `Set(['legacy'])`; an account that cannot sign transactions reports an empty set. Check membership for the version you intend to send rather than assuming a ceiling, since the set grows as Wallet Standard adds versions:

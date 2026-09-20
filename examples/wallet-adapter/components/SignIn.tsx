@@ -1,15 +1,51 @@
 'use client';
 
-import {getBase58Decoder} from '@solana/kit';
-import type {SolanaSignInInput} from '@solana/wallet-adapter';
+import type {Address, OffchainMessageBytes, SignatureBytes} from '@solana/kit';
+import {
+  assertOffchainMessageV1Equal,
+  getBase58Decoder,
+  getOffchainMessageV1Decoder,
+  verifyOffchainMessageEnvelope,
+} from '@solana/kit';
+import type {
+  SolanaSignInInput,
+  SolanaSignInOutput,
+} from '@solana/wallet-adapter';
 import {useWallet} from '@solana/wallet-adapter';
-import {verifySignIn} from '@solana/wallet-standard-util';
+import {
+  createSignInMessageText,
+  verifySignIn,
+} from '@solana/wallet-standard-util';
 import {ActionButton} from './ActionButton';
 import {useNotify} from './Notifications';
 
-export function SignIn() {
+async function verifyOffchainSignIn(
+  input: SolanaSignInInput,
+  output: SolanaSignInOutput,
+): Promise<void> {
+  if (output.signedMessageFormat?.kind !== 'offchainMessage')
+    throw new Error('Wallet did not sign an offchain message!');
+  const address = output.account.address as Address;
+  const content = output.signedMessage as unknown as OffchainMessageBytes;
+  assertOffchainMessageV1Equal(getOffchainMessageV1Decoder().decode(content), {
+    content: createSignInMessageText({
+      ...input,
+      address,
+      domain: input.domain ?? window.location.host,
+    }),
+    requiredSignatories: [{address}],
+    version: 1,
+  });
+  await verifyOffchainMessageEnvelope({
+    content,
+    signatures: {[address]: output.signature as SignatureBytes},
+  });
+}
+
+export function SignIn({offchain = false}: {offchain?: boolean}) {
   const {address, connected, signIn} = useWallet();
   const notify = useNotify();
+  const label = offchain ? 'Sign In (Offchain)' : 'Sign In';
 
   const onClick = async () => {
     try {
@@ -20,17 +56,19 @@ export function SignIn() {
         domain: window.location.host,
         address: address ?? undefined,
         statement: 'Please sign in.',
+        ...(offchain && {useOffchainMessage: {messageVersion: 1}}),
       };
       const output = await signIn(input);
 
-      if (!verifySignIn(input, output))
+      if (offchain) await verifyOffchainSignIn(input, output);
+      else if (!verifySignIn(input, output))
         throw new Error('Sign In verification failed!');
       notify(
         'success',
         `Message signature: ${getBase58Decoder().decode(output.signature)}`,
       );
     } catch (error) {
-      notify('error', `Sign In failed: ${(error as Error).message}`);
+      notify('error', `${label} failed: ${(error as Error).message}`);
     }
   };
 
@@ -40,7 +78,7 @@ export function SignIn() {
       disabled={!signIn}
       unsupported={connected && !signIn}
     >
-      Sign In
+      {label}
     </ActionButton>
   );
 }

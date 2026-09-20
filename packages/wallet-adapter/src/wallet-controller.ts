@@ -9,11 +9,12 @@ import {
 import {walletSigner, type WalletPluginConfig} from '@solana/kit-plugin-wallet';
 import type {
   SolanaSignAndSendTransactionFeature,
+  SolanaSignInFeature,
   SolanaSignInInput,
   SolanaSignOffchainMessageFeature,
   SolanaSignTransactionFeature,
 } from '@solana/wallet-standard-features';
-import {getWalletAccountFeature} from '@wallet-standard/ui';
+import {getWalletAccountFeature, getWalletFeature} from '@wallet-standard/ui';
 import {getWalletAccountForUiWalletAccount} from '@wallet-standard/ui-registry';
 import {
   PublicKey,
@@ -267,6 +268,17 @@ export function createWalletController({
     let target: UiWallet | undefined;
     try {
       target = selectedWallet();
+      if (input?.useOffchainMessage) {
+        const feature = getWalletFeature(
+          target,
+          'solana:signIn',
+        ) as SolanaSignInFeature['solana:signIn'];
+        if (feature.version === '1.0.0') {
+          throw new WalletNotReadyError(
+            'The wallet does not support Sign In With Solana over offchain messages.',
+          );
+        }
+      }
       return await namespace.signIn(target, input ?? {});
     } catch (error) {
       if (superseded(error)) throw error;
