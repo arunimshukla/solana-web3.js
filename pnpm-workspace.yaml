@@ -11,6 +11,7 @@ catalog:
   '@solana-program/token': ^0.16.0
   '@solana/addresses': ^8.3.0
   '@solana/assertions': ^8.3.0
+  '@solana/codecs': ^8.3.0
   '@solana/fast-stable-stringify': ^8.3.0
   '@solana/kit': ^8.3.0
   '@solana/rpc-spec-types': ^8.3.0

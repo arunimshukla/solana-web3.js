@@ -48,8 +48,13 @@ for (const { entry, kind } of loadable) {
     if (typeof Connection !== 'function') {
       throw new Error('Connection export missing or not constructible');
     }
+    const getU64Codec = mod.getU64Codec ?? mod.default?.getU64Codec;
+    if (typeof getU64Codec !== 'function') {
+      throw new Error('@solana/codecs exports missing');
+    }
     new Connection('http://127.0.0.1:8899');
-    console.log(`ok   ${entry} (Connection)`);
+    getU64Codec();
+    console.log(`ok   ${entry} (Connection + codecs)`);
   } catch (err) {
     console.error(`FAIL ${entry}: ${err.message}`);
     failed++;

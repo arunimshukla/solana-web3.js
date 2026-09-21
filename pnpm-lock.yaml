@@ -30,6 +30,9 @@ catalogs:
     '@solana/assertions':
       specifier: ^8.3.0
       version: 8.3.0
+    '@solana/codecs':
+      specifier: ^8.3.0
+      version: 8.3.0
     '@solana/fast-stable-stringify':
       specifier: ^8.3.0
       version: 8.3.0
@@ -184,6 +187,9 @@ importers:
         specifier: 'catalog:'
         version: 0.14.0(@solana/kit@8.3.0(bufferutil@4.0.8)(typescript@5.9.3)(utf-8-validate@5.0.10))
       '@solana/assertions':
+        specifier: 'catalog:'
+        version: 8.3.0(typescript@5.9.3)
+      '@solana/codecs':
         specifier: 'catalog:'
         version: 8.3.0(typescript@5.9.3)
       '@solana/fast-stable-stringify':
