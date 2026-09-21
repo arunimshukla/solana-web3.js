@@ -58,9 +58,6 @@ importers:
 
   examples/wallet-adapter:
     dependencies:
-      '@solana/kit':
-        specifier: 'catalog:'
-        version: 8.3.0(bufferutil@4.0.8)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@solana/wallet-adapter':
         specifier: workspace:*
         version: link:../../packages/wallet-adapter

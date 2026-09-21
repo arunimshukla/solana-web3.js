@@ -1,6 +1,6 @@
 'use client';
 
-import {getBase58Decoder} from '@solana/kit';
+import {getBase58Decoder} from '@solana/web3.js';
 import {useWallet} from '@solana/wallet-adapter';
 import {ActionButton} from './ActionButton';
 import {useNotify} from './Notifications';
