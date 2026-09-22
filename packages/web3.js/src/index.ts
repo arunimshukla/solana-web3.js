@@ -1,6 +1,4 @@
 export {type Blockhash} from '@solana/kit';
-// eslint-disable-next-line import/export -- @solana/codecs is itself a star-export barrel.
-export * from '@solana/codecs';
 export * from './bpf-loader-deprecated';
 export * from './bpf-loader';
 export * from './connection';

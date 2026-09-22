@@ -16,6 +16,7 @@
     "test:typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@solana/kit": "catalog:",
     "@solana/wallet-adapter": "workspace:*",
     "@solana/web3.js": "workspace:*",
     "next": "^16.3.5",

@@ -37,8 +37,6 @@ These notes summarize the user-facing changes that landed since 1.98.4.
 
 ## API And Runtime Changes
 
-- The complete `@solana/codecs` API is re-exported from `@solana/web3.js`, so applications can use the same codec primitives as the v3 implementation without managing a separate import.
-
 ### Connection
 
 - HTTP requests now go through typed Kit RPC calls instead of the legacy request pipeline.

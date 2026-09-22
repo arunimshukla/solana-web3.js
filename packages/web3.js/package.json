@@ -64,7 +64,6 @@
     "@solana-program/stake": "catalog:",
     "@solana-program/system": "catalog:",
     "@solana/assertions": "catalog:",
-    "@solana/codecs": "catalog:",
     "@solana/fast-stable-stringify": "catalog:",
     "@solana/kit": "catalog:",
     "@solana/rpc-spec-types": "catalog:",
