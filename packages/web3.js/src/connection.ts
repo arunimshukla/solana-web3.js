@@ -603,7 +603,7 @@ export type TransactionConfirmationStrategy =
 
 /* @internal */
 function assertEndpointUrl(putativeUrl: string) {
-  if (/^https?:/.test(putativeUrl) === false) {
+  if (/^https?:/i.test(putativeUrl) === false) {
     throw new TypeError('Endpoint URL must start with `http:` or `https:`.');
   }
   return putativeUrl;

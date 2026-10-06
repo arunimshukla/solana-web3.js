@@ -6,7 +6,7 @@ export function makeWebsocketUrl(endpoint: string) {
     throw TypeError(`Failed to validate endpoint URL \`${endpoint}\``);
   }
   const [_, hostish, portWithColon, rest] = matches;
-  const protocol = endpoint.startsWith('https:') ? 'wss:' : 'ws:';
+  const protocol = /^https:/i.test(endpoint) ? 'wss:' : 'ws:';
   const startPort =
     portWithColon == null ? null : parseInt(portWithColon.slice(1), 10);
   const websocketPort =

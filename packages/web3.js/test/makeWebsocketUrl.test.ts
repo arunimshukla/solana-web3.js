@@ -16,6 +16,9 @@ const TEST_CASES = [
   ['http://localhost/', 'ws://localhost/'],
   // `https` => `wss`
   ['https://api.devnet.solana.com/', 'wss://api.devnet.solana.com/'],
+  ['HTTPS://api.devnet.solana.com/', 'wss://api.devnet.solana.com/'],
+  ['HtTpS://api.devnet.solana.com/', 'wss://api.devnet.solana.com/'],
+  ['HTTPS://api.devnet.solana.com:80/', 'wss://api.devnet.solana.com:81/'],
   // IPv4 address
   ['https://192.168.0.1/', 'wss://192.168.0.1/'],
   // IPv6 address

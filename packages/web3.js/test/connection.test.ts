@@ -207,6 +207,16 @@ describe('Connection', function () {
     });
   }
 
+  it('accepts uppercase or mixed-case HTTP(S) URI schemes', () => {
+    for (const endpoint of [
+      'HTTPS://api.mainnet-beta.solana.com',
+      'HtTpS://api.mainnet-beta.solana.com',
+    ]) {
+      const connection = new Connection(endpoint);
+      expect(connection.rpcEndpoint).to.eq(endpoint);
+    }
+  });
+
   if (mockServer) {
     it('uses the commitment the Connection was constructed with as the default commitment for RPC requests', async () => {
       const connection = new Connection(url, 'processed');
