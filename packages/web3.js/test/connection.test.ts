@@ -209,6 +209,8 @@ describe('Connection', function () {
 
   it('accepts uppercase or mixed-case HTTP(S) URI schemes', () => {
     for (const endpoint of [
+      'HTTP://api.mainnet-beta.solana.com',
+      'HtTp://api.mainnet-beta.solana.com',
       'HTTPS://api.mainnet-beta.solana.com',
       'HtTpS://api.mainnet-beta.solana.com',
     ]) {
