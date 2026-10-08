@@ -12,6 +12,9 @@ const INVALID_URLS = [
 const TEST_CASES = [
   // Non-https => `ws`
   ['http://api.devnet.solana.com/', 'ws://api.devnet.solana.com/'],
+  ['HTTP://api.devnet.solana.com/', 'ws://api.devnet.solana.com/'],
+  ['HtTp://api.devnet.solana.com/', 'ws://api.devnet.solana.com/'],
+  ['HTTP://api.devnet.solana.com:80/', 'ws://api.devnet.solana.com:81/'],
   ['gopher://gopher.example.com/', 'ws://gopher.example.com/'],
   ['http://localhost/', 'ws://localhost/'],
   // `https` => `wss`
